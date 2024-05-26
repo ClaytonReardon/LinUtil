@@ -52,7 +52,7 @@ update_pkgs() {
     case "$ID" in
         debian|ubuntu)
             echo -e "${bldgrn}Installing Nala.${rst}"
-            sudo apt update && sudo upgrade -y && sudo apt install nala -y
+            sudo apt update && sudo apt upgrade -y && sudo apt install nala -y
             ;;
         *)
             $UPGRADE
