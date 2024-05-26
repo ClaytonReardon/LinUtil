@@ -1,4 +1,81 @@
 #!/bin/bash
+# Set color codes
+grn='\e[0m\e[0;e2m' # Green
+bldgrn='\e[0m\e[1;32m' # Bold Green
+red='\e[0m\e[0;31m' # Red
+bldred='\e[0m\e[1;31m' # Bold Red
+orange='\e[0m\e[0;33m' # Orange
+bldorange='\e[0m\e[1;33m' # Bold Orange
+rst='\e[0m' # Reset
+
+username="$(whoami)"
+home="/home/$username"
+installdir="$(pwd)"
+
+# Prompt for installation type
+while true; do
+    echo -e "\n${bldgrn}GUI or TTY installation?"
+    echo -e "${grn}1. GUI"
+    echo -e "2. TTY${rst}"
+
+    read -p "Enter choice: " ux_choice
+
+    if [[ -n "$ux_choice" ]]; then
+        break
+    else
+        echo -e "${bldorange}You gotta pick somethin${rst}"
+    fi
+done
+
+command_exists() {
+    command -v $1 >/dev/null 2>&1
+}
+
+checkEnv() {
+    ## Check for requirements.
+    REQUIREMENTS='curl groups sudo'
+    if ! command_exists ${REQUIREMENTS}; then
+        echo -e "${bldred}To run me, you need: ${REQUIREMENTS}${rst}"
+        exit 1
+    fi
+
+    ## Check Package Handeler
+    PACKAGEMANAGER='apt yum dnf pacman zypper'
+    for pgm in ${PACKAGEMANAGER}; do
+        if command_exists ${pgm}; then
+            PACKAGER=${pgm}
+            echo -e "Using ${pgm}"
+        fi
+    done
+
+    if [ -z "${PACKAGER}" ]; then
+        echo -e "${RED}Can't find a supported package manager"
+        exit 1
+    fi
+
+    ## Check if the current directory is writable.
+    GITPATH="$(dirname "$(realpath "$0")")"
+    if [[ ! -w ${GITPATH} ]]; then
+        echo -e "${bldred}Can't write to ${GITPATH}${Rrst}"
+        exit 1
+    fi
+
+    ## Check SuperUser Group
+    SUPERUSERGROUP='wheel sudo root'
+    for sug in ${SUPERUSERGROUP}; do
+        if groups | grep ${sug}; then
+            SUGROUP=${sug}
+            echo -e "Super user group ${SUGROUP}"
+        fi
+    done
+
+    ## Check if member of the sudo group.
+    if ! groups | grep ${SUGROUP} >/dev/null; then
+        echo -e "${RED}You need to be a member of the sudo group to run me!"
+        exit 1
+    fi
+
+}
 
 detect_os() {
     if [ -f /etc/os-release ]; then
