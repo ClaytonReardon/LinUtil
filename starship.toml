@@ -1,0 +1,27 @@
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Inserts a blank line between shell prompts
+add_newline = true
+
+format = '$all'
+
+[hostname]
+ssh_only = false
+style = 'italic red'
+format = '[\[](bold dimmed red)[$ssh_symbol]($style)[](red) [$hostname]($style)[\]](bold dimmed cyan)[─](bold dimmed cyan)'
+
+[username]
+show_always = true
+format = '[\[](bold yellow)[$user]($style)[\]─](bold dimmed red)'
+
+[directory]
+format = '[\[](bold dimmed cyan)[$path]($style)[$read_only]($read_only_style)[\]─󰄾 ](bold dimmed cyan)'
+
+#[character]
+#success_symbol = '[└─](bold green)[❯](bold green)'
+#error_symbol = '[└─](bold green)[❯](bold red)'
+#vimcmd_symbol = '[└─](bold green)[❮](bold green)'
+#vimcmd_replace_one_symbol= '[└─](bold green)[❮](bold purple)'
+#vimcmd_replace_symbol= '[└─](bold green)[❮](bold purple)'
+#vimcmd_visual_symbol= '[└─](bold green)[❮](bold yellow)'

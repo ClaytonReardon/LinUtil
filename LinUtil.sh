@@ -65,16 +65,16 @@ install_pkgs() {
     case "$ID" in
         debian|ubuntu)
         echo -e "${bldgrn}Installing Debian specific packages${rst}"
-        $INSTALL fd-find ripgrep bat build-essential btop
+        $INSTALL fd-find ripgrep bat build-essential btop trash-cli
         ;;
         arch)
         echo -e "${bldgrn}Installing Arch specific packages${rst}"
-        $INSTALL fd ripgrep bat btop
+        $INSTALL fd ripgrep bat btop trash-cli
         $INSTALL --needed base-devel
         ;;
         fedora)
         echo -e "${bldgrn}Installing Fedora specific packages${rst}"
-        $INSTALL fd-find ripgrep bat btop
+        $INSTALL fd-find ripgrep bat btop trash-cli
         sudo dnf groupinstall "Development Tools" -y
         ;;
         opensuse)
@@ -101,5 +101,8 @@ install_pkgs() {
         sudo dnf install epel-release -y
         sudo dnf install btop -y
     esac
-
 }
+
+# Move zshrc and starship.toml to correct location
+cp zshrc ~/.zshrc
+cp starship.toml ~/.config/starship.toml
