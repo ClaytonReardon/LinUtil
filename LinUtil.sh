@@ -32,9 +32,9 @@ done
 if [[ ${#font_choices[@]} -eq 0 ]]; then
     # User prompt for font selection
     while true; do
-        echo -e "${bldgrn}Please select the font(s) you want to install:${rst}"
-        echo -e "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono"
-        read -p "${bldgrn}Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): ${rst}" font_choice
+        echo -e "${bldgrn}Please select the font(s) you want to install:"
+        echo -e "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono${rst}"
+        read -p "Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): " font_choice
 
         # Store the font choice for later use
         font_choice_array=($font_choice)
@@ -73,7 +73,7 @@ pkgs() {
             sudo apt update
             sudo apt upgrade -y
             sudo apt install nala -y # Install nala frontend for apt
-            sudo nala install -y "$common_pkgs" command-not-found build-essential fd-find
+            sudo nala install -y $common_pkgs command-not-found build-essential fd-find
             sh <(curl -L https://nixos.org/nix/install) --daemon            # Install Nix package manager
             . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh     # Source Nix profile to make nix available in current session
             nix-env -iA nixpkgs.neovim nixpkgs.starship nixpkgs.fzf         # Packages that are too old on Debian stable
