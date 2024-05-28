@@ -8,12 +8,12 @@ format = '$all'
 
 [hostname]
 ssh_only = false
-style = 'italic red'
-format = '[\[](bold dimmed red)[$ssh_symbol]($style)[](red) [$hostname]($style)[\]](bold dimmed cyan)[─](bold dimmed cyan)'
+style = 'green'
+format = '[\[](bold dimmed green)[$ssh_symbol]($style)[$hostname]($style)[ ](green)[\]](bold dimmed green)'
 
 [username]
 show_always = true
-format = '[\[](bold yellow)[$user]($style)[\]─](bold dimmed red)'
+format = '[\[](bold yellow)[$user]($style)[\]](bold yellow)'
 
 [directory]
 format = '[\[](bold dimmed cyan)[$path]($style)[$read_only]($read_only_style)[\]─󰄾 ](bold dimmed cyan)'

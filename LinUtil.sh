@@ -12,6 +12,16 @@ username="$(whoami)"
 home="/home/$username"
 installdir="$(pwd)"
 
+unattended=false
+
+usage() {
+    echo -e "Usage: $0 [OPTIONS]"
+    echo -e "Options:"
+    echo -e "   -f, --fonts     Specify the fonts to install (e.g. fira jetbrains meslo terminus ubuntu)"
+    echo -e "   -h, --help      Display this help message"
+    exit 0
+
+
 font_choices=()
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -22,19 +32,34 @@ while [[ $# -gt 0 ]]; do
                 shift
             done
             ;;
+        -u|--unattended)
+            unattended=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
         *)
             echo -e "${bldorange}Unknown option: $1${rst}"
+            usage
             exit 1
             ;;
     esac
 done
 
 if [[ ${#font_choices[@]} -eq 0 ]]; then
+    if $unattended; then
+        font_choices+=("jetbrains")
+    else
     # User prompt for font selection
     while true; do
         echo -e "${bldgrn}Please select the font(s) you want to install:"
         echo -e "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono${rst}"
         read -p "Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): " font_choice
+
+        if [ -z "$font_choice" ]; then
+            font_choice="2" # Default to JetBrainsMono
+        fi
 
         # Store the font choice for later use
         font_choice_array=($font_choice)
@@ -47,7 +72,7 @@ if [[ ${#font_choices[@]} -eq 0 ]]; then
         if [[ $font_choice =~ ^[1-5\ ]+$ ]]; then
             break
         else
-            echo -e "${bldred}Invalid input. You gotta pick a font.${rst}"
+            echo -e "${bldred}Invalid input. Select a number 1-5${rst}"
         fi
     done
 fi
@@ -74,7 +99,7 @@ pkgs() {
             sudo apt install nala -y # Install nala frontend for apt
             
             echo -e "${bldgrn}Installing packages${rst}"
-            sudo nala install -y $common_pkgs command-not-found build-essential fd-find
+            sudo nala install -y $common_pkgs command-not-found build-essential fd-find console-setup
             
             echo -e "${bldgrn}Installing Nix package manager${rst}"
             {   # Arguments to be passed to Nix installer
@@ -92,15 +117,15 @@ pkgs() {
             ;;
         arch)
             sudo pacman -Syu --noconfirm
-            sudo pacman -S --noconfirm $common_pkgs base-devel fd neovim
+            sudo pacman -S --noconfirm $common_pkgs base-devel fd neovim kbd
             ;;
         fedora|rhel)
             sudo dnf upgrade -y
-            sudo dnf install -y $common_pkgs dnf-plugins-core fd-find 
+            sudo dnf install -y $common_pkgs dnf-plugins-core fd-find kbd
             ;;
         opensuse)
             sudo zypper --non-interactive refresh && sudo zypper --non-interactive update
-            sudo zypper install -y $common_pkgs fd 
+            sudo zypper install -y $common_pkgs fd kbd
             ;;
         *)
             echo -e "${bldred}Unsupported OS, I can't help you here.${rst}"
@@ -129,10 +154,12 @@ fonts() {
         [ubuntu]="UbuntuMono.zip"
     )
 
+    # Make fonts directory if it doesn't exist
     if [[ ! -d $home/.local/share/fonts ]]; then
         mkdir -p $home/.local/share/fonts
     fi
 
+    # Install selected fonts
     for font in "$@"; do
         echo -e "${bldgrn}Installing ${font_urls[$font^]}${rst}"
         wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/${font_urls[$font]}
@@ -140,7 +167,8 @@ fonts() {
         rm ${font_urls[$font]}
     done
 
-    fc-cache -f -v # Update fonts
+    # Update fonts
+    fc-cache -f -v
 }
 
 colorscripts() {
@@ -155,9 +183,11 @@ colorscripts() {
 
 dotfiles() {
     echo -e "${bldgrn}Copying dotfiles${rst}"
+    # If .config directory doesn't exist, create it
     if [[ ! -d $home/.config ]]; then
         mkdir $home/.config
     fi
+    # Copy dotfiles
     cp -r $installdir/config/* $home/.config/
     cp zshrc $home/.zshrc
     echo -e "${bldgrn}Sourcing zshrc & installing zinit plugins${rst}"
