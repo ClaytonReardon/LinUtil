@@ -12,186 +12,144 @@ username="$(whoami)"
 home="/home/$username"
 installdir="$(pwd)"
 
-# Prompt for installation type
-while true; do
-    echo -e "\n${bldgrn}GUI or TTY installation?"
-    echo -e "${grn}1. GUI"
-    echo -e "2. TTY${rst}"
-
-    read -p "Enter choice: " ux_choice
-
-    if [[ -n "$ux_choice" ]]; then
-        break
-    else
-        echo -e "${bldorange}You gotta pick somethin${rst}"
-    fi
+font_choices=()
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -f|--fonts)
+            shift
+            while [[ $# -gt 0 && ! $1 =~ ^- ]]; do
+                font_choices+=("$1")
+                shift
+            done
+            ;;
+        *)
+            echo -e "${bldorange}Unknown option: $1${rst}"
+            exit 1
+            ;;
+    esac
 done
+
+if [[ ${#font_choices[@]} -eq 0 ]]; then
+    # User prompt for font selection
+    while true; do
+        echo -e "${bldgrn}Please select the font(s) you want to install:${rst}"
+        echo "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono"
+        read -p "${bldgrn}Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): ${rst}" font_choice
+
+        # Store the font choice for later use
+        font_choice_array=($font_choice)
+        declare -A font_map=( [1]="fira" [2]="jetbrains" [3]="meslo" [4]="terminus" [5]="ubuntu")
+        font_choices=()
+        for choice in "${font_choice_array[@]}"; do
+            font_choices+=("${font_map[$choice]}")
+        done
+
+        if [[ $font_choice =~ ^[1-5\ ]+$ ]]; then
+            break
+        else
+            echo -e "${bldred}Invalid input. You gotta pick a font.${rst}"
+        fi
+    done
+fi
 
 command_exists() {
     command -v $1 >/dev/null 2>&1
 }
 
-checkEnv() {
-    ## Check for requirements.
-    REQUIREMENTS='curl groups sudo'
-    if ! command_exists ${REQUIREMENTS}; then
-        echo -e "${bldred}To run me, you need: ${REQUIREMENTS}${rst}"
-        exit 1
-    fi
-
-    ## Check Package Handeler
-    PACKAGEMANAGER='apt yum dnf pacman zypper'
-    for pgm in ${PACKAGEMANAGER}; do
-        if command_exists ${pgm}; then
-            PACKAGER=${pgm}
-            echo -e "Using ${pgm}"
-        fi
-    done
-
-    if [ -z "${PACKAGER}" ]; then
-        echo -e "${RED}Can't find a supported package manager"
-        exit 1
-    fi
-
-    ## Check if the current directory is writable.
-    GITPATH="$(dirname "$(realpath "$0")")"
-    if [[ ! -w ${GITPATH} ]]; then
-        echo -e "${bldred}Can't write to ${GITPATH}${Rrst}"
-        exit 1
-    fi
-
-    ## Check SuperUser Group
-    SUPERUSERGROUP='wheel sudo root'
-    for sug in ${SUPERUSERGROUP}; do
-        if groups | grep ${sug}; then
-            SUGROUP=${sug}
-            echo -e "Super user group ${SUGROUP}"
-        fi
-    done
-
-    ## Check if member of the sudo group.
-    if ! groups | grep ${SUGROUP} >/dev/null; then
-        echo -e "${RED}You need to be a member of the sudo group to run me!"
-        exit 1
-    fi
-
-}
-
 detect_os() {
-    if [ -f /etc/os-release ]; then
+    if [[ -f /etc/os-release ]]; then
         . /etc/os-release
-        OS=$ID
-        case "$ID" in 
-            debian|ubuntu)
-                PKG_MAN="nala"
-                UPDATE="sudo nala upgrade -y"
-                UPGRADE=""
-                INSTALL="sudo nala install -y"
-                ;;
-            arch)
-                PKG_MAN="pacman"
-                UPDATE="sudo pacman -Syu --noconfirm"
-                UPGRADE=""
-                INSTALL="sudo pacman -S --noconfirm"
-                ;;
-            fedora)
-                PKG_MAN="dnf"
-                UPDATE="sudo dnf upgrade -y"
-                UPGRADE=""
-                INSTALL="sudo dnf install -y"
-                ;;
-            opensuse)
-                PKG_MAN="zypper"
-                UPDATE="sudo zypper update -y"
-                UPGRADE=""
-                INSTALL="sudo zypper install -y"
-                ;;
-            rhel)
-                PKG_MAN="yum"
-                UPDATE="sudo yum upgrade -y"
-                UPGRADE=""
-                INSTALL="sudo yum install -y"
-                ;;
-            *)
-                echo "Unsupported OS, I can't help you here."
-                exit 1
-                ;;
-        esac
+        echo $ID
     else
-        echo "OS detection failed: /etc/os-release not found."
+        echo -e "${bldred}OS detection failed: /etc/os-release not found.${rst}"
         exit 1
     fi
 }
 
-update_pkgs() {
-    echo -e "${bldgrn}Updating package list...${rst}"
-    detect_os
-    case "$ID" in
+pkgs() {
+    common_pkgs="zsh vim exa ripgrep bat unzip curl git btop"
+    case $1 in
         debian|ubuntu)
-            echo -e "${bldgrn}Installing Nala.${rst}"
-            sudo apt update && sudo apt upgrade -y && sudo apt install nala -y
-            ;;
-        *)
-            $UPGRADE
-            ;;
-        esac    
-}
-
-install_pkgs() {
-    echo -e "${bldgrn}Installing common packages${rst}"
-    $INSTALL zsh exa unzip curl git
-    detect_os
-    case "$ID" in
-        debian|ubuntu)
-            echo -e "${bldgrn}Installing Debian specific packages${rst}"
-            $INSTALL fd-find ripgrep bat build-essential btop trash-cli
+            sudo apt update
+            sudo apt upgrade -y
+            sudo apt install nala -y # Install nala frontend for apt
+            sudo nala install -y "$common_pkgs" command-not-found build-essential fd-find
+            sh <(curl -L https://nixos.org/nix/install) --daemon            # Install Nix package manager
+            . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh     # Source Nix profile to make nix available in current session
+            nix-env -iA nixpkgs.neovim nixpkgs.starship nixpkgs.fzf         # Packages that are too old on Debian stable
             ;;
         arch)
-            echo -e "${bldgrn}Installing Arch specific packages${rst}"
-            $INSTALL fd ripgrep bat btop trash-cli
-            $INSTALL --needed base-devel
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S --noconfirm "$common_pkgs" base-devel fd neovim
             ;;
-        fedora)
-            echo -e "${bldgrn}Installing Fedora specific packages${rst}"
-            $INSTALL fd-find ripgrep bat btop trash-cli
-            sudo dnf groupinstall "Development Tools" -y
+        fedora|rhel)
+            sudo dnf upgrade -y
+            sudo dnf install -y "$common_pkgs" dnf-plugins-core fd-find 
             ;;
         opensuse)
-            echo -e "${bldgrn}Installing OpenSUSE specific packages${rst}"
-            $INSTALL fd ripgrep bat btop
-            sudo zypper install --type pattern devel_basis -y
+            sudo zypper --non-interactive refresh && sudo zypper --non-interactive update
+            sudo zypper install -y "$common_pkgs" fd 
             ;;
-        rhel)
-            echo -e "${bldgrn}Installing RHEL specific packages${rst}"
-            sudo dnf groupinstall "Development Tools" -y
-            # Install fd-find
-            sudop dnf copr enable tkbcopr/fd -y
-            sudo dnf install fd -f
-            # Install ripgrep
-            sudo yum install yum-utils -y
-            sudo yum-config-manager --add-repo=https://copr.fedorainfracloud.org/coprs/carlwgeorge/ripgrep/repo/epel-7/carlwgeorge-ripgrep-epel-7.repo
-            sudo yum install ripgrep -y
-            # Install bat
-            wget https://github.com/sharkdp/bat/releases/download/v0.23.0/bat-v0.23.0-x86_64-unknown-linux-gnu.tar.gz
-            tar -xvf bat-v0.23.0-x86_64-unknown-linux-gnu.tar.gz
-            sudo mv bat-v0.23.0-x86_64-unknown-linux-gnu/bat /usr/bin/bat
-            rm -r bat-v0.23.0-x86_64-unknown-linux-gnu.tar.gz
-            # Install btop
-            sudo dnf install epel-release -y
-            sudo dnf install btop -y
+        *)
+            echo -e "${bldred}Unsupported OS, I can't help you here.${rst}"
+            exit 1
+            ;;
     esac
 }
 
-main() {
-    detect_os
-    update_pkgs
-    install_pkgs
-    # Move zshrc and starship.toml to correct location
-    cp zshrc ~/.zshrc
-    if [ ! -d ~/.config ]; then
-        mkdir ~/.config
-    fi 
-    cp starship.toml ~/.config/starship.toml
+adv_cp_mv() {
+    # Install Advanced Copy and Move commands to add progress bars (https://github.com/jarun/advcpmv)
+    echo -e "${bldgrn}Installing Advanced Copy and Move commands${rst}"
+    curl https://raw.githubusercontent.com/jarun/advcpmv/master/install.sh --create-dirs -o ./advcpmv/install.sh
+    (cd advcpmv && sh install.sh)
+    echo -e "${bldgrn}Copying advcp to /usr/bin/advcp${rst}"
+    sudo cp advcpmv/advcp /usr/bin/advcp
+    echo -e "${bldgrn}Copying advmv to /usr/bin/advmv${rst}"
+    sudo cp advcpmv/advmv /usr/bin/advmv
 }
 
-main
+fonts() {
+    declare -A font_urls=(
+        [fira]="FiraMono.zip"
+        [jetbrains]="JetBrainsMono.zip"
+        [meslo]="Meslo.zip"
+        [terminus]="Terminus.zip"
+        [ubuntu]="UbuntuMono.zip"
+    )
+
+    if [[ ! -d $home/.local/share/fonts ]]; then
+        mkdir -p $home/.local/share/fonts
+    fi
+
+    for font in "$@"; do
+        wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/${font_urls[$font]}
+        unzip ${font_urls[$font]} -d $home/.local/share/fonts
+        rm ${font_urls[$font]}
+    done
+
+    fc-cache -f -v # Update fonts
+}
+
+colorscripts() {
+    git clone https://gitlab.com/dwt1/shell-color-scripts.git
+    cd shell-color-scripts
+    sudo make install
+    sudo rm -rf /opt/shell-color-scripts/colorscripts
+    cd $installdir
+    sudo cp -r colorscripts /opt/shell-color-scripts/
+}
+
+dotfiles() {
+    if [[ ! -d $home/.config ]]; then
+        mkdir $home/.config
+    fi
+    cp -r $installdir/config/* $home/.config/
+    cp zshrc $home/.zshrc
+    source $home/.zshrc
+}
+
+od_id=$(detect_os)
+pkgs $od_id
+fonts "${font_choices[@]}"
+colorscripts
+dotfiles
