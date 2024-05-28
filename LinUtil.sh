@@ -33,7 +33,7 @@ if [[ ${#font_choices[@]} -eq 0 ]]; then
     # User prompt for font selection
     while true; do
         echo -e "${bldgrn}Please select the font(s) you want to install:${rst}"
-        echo "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono"
+        echo -e "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono"
         read -p "${bldgrn}Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): ${rst}" font_choice
 
         # Store the font choice for later use
