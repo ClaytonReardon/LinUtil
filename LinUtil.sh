@@ -52,10 +52,6 @@ if [[ ${#font_choices[@]} -eq 0 ]]; then
     done
 fi
 
-command_exists() {
-    command -v $1 >/dev/null 2>&1
-}
-
 detect_os() {
     if [[ -f /etc/os-release ]]; then
         . /etc/os-release
@@ -67,28 +63,44 @@ detect_os() {
 }
 
 pkgs() {
-    common_pkgs="zsh vim exa ripgrep bat unzip curl git btop"
+    common_pkgs="zsh vim exa ripgrep bat unzip curl git btop trash-cli"
     case $1 in
         debian|ubuntu)
+            echo -e "${bldgrn}Updating package lists and upgrading packages${rst}"
             sudo apt update
             sudo apt upgrade -y
+
+            echo -e "${bldgrn}Installing Nala ${grn}(frontend for apt)${rst}"
             sudo apt install nala -y # Install nala frontend for apt
+            
+            echo -e "${bldgrn}Installing packages${rst}"
             sudo nala install -y $common_pkgs command-not-found build-essential fd-find
-            sh <(curl -L https://nixos.org/nix/install) --daemon            # Install Nix package manager
-            . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh     # Source Nix profile to make nix available in current session
-            nix-env -iA nixpkgs.neovim nixpkgs.starship nixpkgs.fzf         # Packages that are too old on Debian stable
+            
+            echo -e "${bldgrn}Installing Nix package manager${rst}"
+            {   # Arguments to be passed to Nix installer
+                echo "n"
+                echo "y"
+                echo "y"
+                echo ""
+            } | sh <(curl -L https://nixos.org/nix/install) --daemon
+
+            echo -e "${bldgrn}Sourching Nix profile to make Nix available in this session${rst}"
+            . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh 
+
+            echo -e "${bldgrn}Installing packages with Nix ${grn}(Neovim, Starship Prompt, FZF, Zoxide)${rst}"
+            nix-env -iA nixpkgs.neovim nixpkgs.starship nixpkgs.fzf nixpkgs.zoxide # Packages that are too old on Debian stable
             ;;
         arch)
             sudo pacman -Syu --noconfirm
-            sudo pacman -S --noconfirm "$common_pkgs" base-devel fd neovim
+            sudo pacman -S --noconfirm $common_pkgs base-devel fd neovim
             ;;
         fedora|rhel)
             sudo dnf upgrade -y
-            sudo dnf install -y "$common_pkgs" dnf-plugins-core fd-find 
+            sudo dnf install -y $common_pkgs dnf-plugins-core fd-find 
             ;;
         opensuse)
             sudo zypper --non-interactive refresh && sudo zypper --non-interactive update
-            sudo zypper install -y "$common_pkgs" fd 
+            sudo zypper install -y $common_pkgs fd 
             ;;
         *)
             echo -e "${bldred}Unsupported OS, I can't help you here.${rst}"
@@ -122,6 +134,7 @@ fonts() {
     fi
 
     for font in "$@"; do
+        echo -e "${bldgrn}Installing ${font_urls[$font^]}${rst}"
         wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/${font_urls[$font]}
         unzip ${font_urls[$font]} -d $home/.local/share/fonts
         rm ${font_urls[$font]}
@@ -131,6 +144,7 @@ fonts() {
 }
 
 colorscripts() {
+    echo -e "${bldgrn}Installing shell-color-scripts${rst}"
     git clone https://gitlab.com/dwt1/shell-color-scripts.git
     cd shell-color-scripts
     sudo make install
@@ -140,16 +154,20 @@ colorscripts() {
 }
 
 dotfiles() {
+    echo -e "${bldgrn}Copying dotfiles${rst}"
     if [[ ! -d $home/.config ]]; then
         mkdir $home/.config
     fi
     cp -r $installdir/config/* $home/.config/
     cp zshrc $home/.zshrc
+    echo -e "${bldgrn}Sourcing zshrc & installing zinit plugins${rst}"
     source $home/.zshrc
 }
 
-od_id=$(detect_os)
-pkgs $od_id
+os_id=$(detect_os)
+echo -e "Detected ${bldgrn}$os_id${rst}"
+pkgs $os_id
 fonts "${font_choices[@]}"
+adv_cp_mv
 colorscripts
 dotfiles
