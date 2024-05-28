@@ -20,7 +20,7 @@ usage() {
     echo -e "   -f, --fonts     Specify the fonts to install (e.g. fira jetbrains meslo terminus ubuntu)"
     echo -e "   -h, --help      Display this help message"
     exit 0
-
+}
 
 font_choices=()
 while [[ $# -gt 0 ]]; do
