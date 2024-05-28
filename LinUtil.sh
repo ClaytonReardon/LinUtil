@@ -52,29 +52,30 @@ if [[ ${#font_choices[@]} -eq 0 ]]; then
         font_choices+=("jetbrains")
     else
     # User prompt for font selection
-    while true; do
-        echo -e "${bldgrn}Please select the font(s) you want to install:"
-        echo -e "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono${rst}"
-        read -p "Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): " font_choice
+        while true; do
+            echo -e "${bldgrn}Please select the font(s) you want to install:"
+            echo -e "${grn}1. FiraMono 2. JetBrainsMono 3. Meslo 4. Terminus 5. UbuntuMono${rst}"
+            read -p "Enter the number(s) of the font(s) you want to install (e.g., 1 3 5): " font_choice
 
-        if [ -z "$font_choice" ]; then
-            font_choice="2" # Default to JetBrainsMono
-        fi
+            if [ -z "$font_choice" ]; then
+                font_choice="2" # Default to JetBrainsMono
+            fi
 
-        # Store the font choice for later use
-        font_choice_array=($font_choice)
-        declare -A font_map=( [1]="fira" [2]="jetbrains" [3]="meslo" [4]="terminus" [5]="ubuntu")
-        font_choices=()
-        for choice in "${font_choice_array[@]}"; do
-            font_choices+=("${font_map[$choice]}")
+            # Store the font choice for later use
+            font_choice_array=($font_choice)
+            declare -A font_map=( [1]="fira" [2]="jetbrains" [3]="meslo" [4]="terminus" [5]="ubuntu")
+            font_choices=()
+            for choice in "${font_choice_array[@]}"; do
+                font_choices+=("${font_map[$choice]}")
+            done
+
+            if [[ $font_choice =~ ^[1-5\ ]+$ ]]; then
+                break
+            else
+                echo -e "${bldred}Invalid input. Select a number 1-5${rst}"
+            fi
         done
-
-        if [[ $font_choice =~ ^[1-5\ ]+$ ]]; then
-            break
-        else
-            echo -e "${bldred}Invalid input. Select a number 1-5${rst}"
-        fi
-    done
+    fi
 fi
 
 detect_os() {
