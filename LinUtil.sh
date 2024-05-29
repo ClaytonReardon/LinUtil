@@ -122,7 +122,7 @@ pkgs() {
 
             # Install Zoxide
             echo -e "\n${bldgrn}Installing Zoxide${rst}\n"
-            curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+            sh <(curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh) <<< 'y'
             ;;
         arch)
             sudo pacman -Syu --noconfirm
