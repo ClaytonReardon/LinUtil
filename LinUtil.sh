@@ -103,13 +103,12 @@ pkgs() {
             sudo nala install -y $common_pkgs command-not-found build-essential fd-find console-setup
             
             echo -e "${bldgrn}Installing Nix package manager${rst}"
-            # {   # Arguments to be passed to Nix installer
-            #     echo "n"
-            #     echo "y"
-            #     echo "y"
-            #     echo ""
-            # } | 
-            sh <(curl -L https://nixos.org/nix/install) --daemon
+            {   # Arguments to be passed to Nix installer
+                echo "n"
+                echo "y"
+                echo "y"
+                echo ""
+            } | sh <(curl -L https://nixos.org/nix/install) --daemon
 
             echo -e "${bldgrn}Sourching Nix profile to make Nix available in this session${rst}"
             . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh 
@@ -119,7 +118,7 @@ pkgs() {
 
             # Install Starship Prompt
             echo -e "${bldgrn}Installing Starship Prompt${rst}"
-            curl -sS https://starship.rs/install.sh | sh
+            yes | curl -sS https://starship.rs/install.sh | sh
 
             # Install Zoxide
             echo -e "${bldgrn}Installing Zoxide${rst}"
@@ -230,4 +229,4 @@ fonts "${font_choices[@]}"
 adv_cp_mv
 colorscripts
 dotfiles
-exec zshsudo a
+exec zsh
