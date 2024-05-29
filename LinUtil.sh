@@ -1,6 +1,6 @@
 #!/bin/bash
 # Set color codes
-grn='\e[0m\e[0;e2m' # Green
+grn='\e[0m\e[0;32m' # Green
 bldgrn='\e[0m\e[1;32m' # Bold Green
 red='\e[0m\e[0;31m' # Red
 bldred='\e[0m\e[1;31m' # Bold Red
@@ -103,47 +103,63 @@ pkgs() {
             sudo nala install -y $common_pkgs command-not-found build-essential fd-find console-setup
             
             echo -e "${bldgrn}Installing Nix package manager${rst}"
-            {   # Arguments to be passed to Nix installer
-                echo "n"
-                echo "y"
-                echo "y"
-                echo ""
-            } | sh <(curl -L https://nixos.org/nix/install) --daemon
+            # {   # Arguments to be passed to Nix installer
+            #     echo "n"
+            #     echo "y"
+            #     echo "y"
+            #     echo ""
+            # } | 
+            sh <(curl -L https://nixos.org/nix/install) --daemon
 
             echo -e "${bldgrn}Sourching Nix profile to make Nix available in this session${rst}"
             . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh 
 
             echo -e "${bldgrn}Installing packages with Nix ${grn}(Neovim, Starship Prompt, FZF, Zoxide)${rst}"
-            nix-env -iA nixpkgs.neovim nixpkgs.starship nixpkgs.fzf nixpkgs.zoxide # Packages that are too old on Debian stable
+            nix-env -iA nixpkgs.neovim nixpkgs.fzf # Packages that are too old on Debian stable
+
+            # Install Starship Prompt
+            echo -e "${bldgrn}Installing Starship Prompt${rst}"
+            curl -sS https://starship.rs/install.sh | sh
+
+            # Install Zoxide
+            echo -e "${bldgrn}Installing Zoxide${rst}"
+            curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
             ;;
         arch)
             sudo pacman -Syu --noconfirm
             sudo pacman -S --noconfirm $common_pkgs base-devel fd neovim kbd
+            # Install Starship Prompt
+            echo -e "${bldgrn}Installing Starship Prompt${rst}"
+            curl -sS https://starship.rs/install.sh | sh
+            # Install Zoxide
+            echo -e "${bldgrn}Installing Zoxide${rst}"
+            curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
             ;;
         fedora|rhel)
             sudo dnf upgrade -y
             sudo dnf install -y $common_pkgs dnf-plugins-core fd-find kbd
+            # Install Starship Prompt
+            echo -e "${bldgrn}Installing Starship Prompt${rst}"
+            curl -sS https://starship.rs/install.sh | sh
+            # Install Zoxide
+            echo -e "${bldgrn}Installing Zoxide${rst}"
+            curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
             ;;
         opensuse)
             sudo zypper --non-interactive refresh && sudo zypper --non-interactive update
             sudo zypper install -y $common_pkgs fd kbd
+            # Install Starship Prompt
+            echo -e "${bldgrn}Installing Starship Prompt${rst}"
+            curl -sS https://starship.rs/install.sh | sh
+            # Install Zoxide
+            echo -e "${bldgrn}Installing Zoxide${rst}"
+            curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
             ;;
         *)
             echo -e "${bldred}Unsupported OS, I can't help you here.${rst}"
             exit 1
             ;;
     esac
-}
-
-adv_cp_mv() {
-    # Install Advanced Copy and Move commands to add progress bars (https://github.com/jarun/advcpmv)
-    echo -e "${bldgrn}Installing Advanced Copy and Move commands${rst}"
-    curl https://raw.githubusercontent.com/jarun/advcpmv/master/install.sh --create-dirs -o ./advcpmv/install.sh
-    (cd advcpmv && sh install.sh)
-    echo -e "${bldgrn}Copying advcp to /usr/bin/advcp${rst}"
-    sudo cp advcpmv/advcp /usr/bin/advcp
-    echo -e "${bldgrn}Copying advmv to /usr/bin/advmv${rst}"
-    sudo cp advcpmv/advmv /usr/bin/advmv
 }
 
 fonts() {
@@ -164,12 +180,23 @@ fonts() {
     for font in "$@"; do
         echo -e "${bldgrn}Installing ${font_urls[$font^]}${rst}"
         wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/${font_urls[$font]}
-        unzip ${font_urls[$font]} -d $home/.local/share/fonts
+        unzip -o ${font_urls[$font]} -d $home/.local/share/fonts
         rm ${font_urls[$font]}
     done
 
     # Update fonts
     fc-cache -f -v
+}
+
+adv_cp_mv() {
+    # Install Advanced Copy and Move commands to add progress bars (https://github.com/jarun/advcpmv)
+    echo -e "${bldgrn}Installing Advanced Copy and Move commands ${grn}(Adds progress bars)${rst}"
+    curl https://raw.githubusercontent.com/jarun/advcpmv/master/install.sh --create-dirs -o ./advcpmv/install.sh
+    (cd advcpmv && sh install.sh)
+    echo -e "${bldgrn}Copying advcp to /usr/bin/advcp${rst}"
+    sudo cp advcpmv/advcp /usr/bin/advcp
+    echo -e "${bldgrn}Copying advmv to /usr/bin/advmv${rst}"
+    sudo cp advcpmv/advmv /usr/bin/advmv
 }
 
 colorscripts() {
@@ -184,15 +211,16 @@ colorscripts() {
 
 dotfiles() {
     echo -e "${bldgrn}Copying dotfiles${rst}"
+
     # If .config directory doesn't exist, create it
     if [[ ! -d $home/.config ]]; then
         mkdir $home/.config
     fi
+
     # Copy dotfiles
     cp -r $installdir/config/* $home/.config/
     cp zshrc $home/.zshrc
     echo -e "${bldgrn}Sourcing zshrc & installing zinit plugins${rst}"
-    source $home/.zshrc
 }
 
 os_id=$(detect_os)
@@ -202,3 +230,4 @@ fonts "${font_choices[@]}"
 adv_cp_mv
 colorscripts
 dotfiles
+exec zshsudo a
