@@ -70,8 +70,14 @@ alias mv='advmv -gi' # Move w prog bar & overwrite confirmation
 # Change Manpager from Less to Batcat
 export MANPAGER='/bin/batcat --wrap=character'
 
+# Set Path
+export PATH="$PATH:$HOME/.local/bin"
+
 
 # Shell Integrations
 eval "$(starship init zsh)"
 source <(fzf --zsh)
 eval "$(zoxide init --cmd cd zsh)"
+
+# Colorscript at shell startup
+colorscript -r

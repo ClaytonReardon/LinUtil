@@ -92,17 +92,17 @@ pkgs() {
     common_pkgs="zsh vim exa ripgrep bat unzip curl git btop trash-cli"
     case $1 in
         debian|ubuntu)
-            echo -e "${bldgrn}Updating package lists and upgrading packages${rst}"
+            echo -e "\n${bldgrn}Updating package lists and upgrading packages${rst}\n"
             sudo apt update
             sudo apt upgrade -y
 
-            echo -e "${bldgrn}Installing Nala ${grn}(frontend for apt)${rst}"
+            echo -e "\n${bldgrn}Installing Nala ${grn}(frontend for apt)${rst}\n"
             sudo apt install nala -y # Install nala frontend for apt
             
-            echo -e "${bldgrn}Installing packages${rst}"
+            echo -e "\n${bldgrn}Installing packages${rst}\n"
             sudo nala install -y $common_pkgs command-not-found build-essential fd-find console-setup
             
-            echo -e "${bldgrn}Installing Nix package manager${rst}"
+            echo -e "\n${bldgrn}Installing Nix package manager${rst}\n"
             {   # Arguments to be passed to Nix installer
                 echo "n"
                 echo "y"
@@ -110,18 +110,18 @@ pkgs() {
                 echo ""
             } | sh <(curl -L https://nixos.org/nix/install) --daemon
 
-            echo -e "${bldgrn}Sourching Nix profile to make Nix available in this session${rst}"
+            echo -e "\n${bldgrn}Sourching Nix profile to make Nix available in this session${rst}\n"
             . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh 
 
-            echo -e "${bldgrn}Installing packages with Nix ${grn}(Neovim, Starship Prompt, FZF, Zoxide)${rst}"
+            echo -e "\n${bldgrn}Installing packages with Nix ${grn}(Neovim, Starship Prompt, FZF, Zoxide)${rst}\n"
             nix-env -iA nixpkgs.neovim nixpkgs.fzf # Packages that are too old on Debian stable
 
             # Install Starship Prompt
-            echo -e "${bldgrn}Installing Starship Prompt${rst}"
+            echo -e "\n${bldgrn}Installing Starship Prompt${rst}\n"
             yes | curl -sS https://starship.rs/install.sh | sh
 
             # Install Zoxide
-            echo -e "${bldgrn}Installing Zoxide${rst}"
+            echo -e "\n${bldgrn}Installing Zoxide${rst}\n"
             curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
             ;;
         arch)
@@ -177,7 +177,7 @@ fonts() {
 
     # Install selected fonts
     for font in "$@"; do
-        echo -e "${bldgrn}Installing ${font_urls[$font^]}${rst}"
+        echo -e "\n${bldgrn}Installing ${font_urls[$font^]}${rst}\n"
         wget https://github.com/ryanoasis/nerd-fonts/releases/download/v3.2.1/${font_urls[$font]}
         unzip -o ${font_urls[$font]} -d $home/.local/share/fonts
         rm ${font_urls[$font]}
@@ -189,7 +189,7 @@ fonts() {
 
 adv_cp_mv() {
     # Install Advanced Copy and Move commands to add progress bars (https://github.com/jarun/advcpmv)
-    echo -e "${bldgrn}Installing Advanced Copy and Move commands ${grn}(Adds progress bars)${rst}"
+    echo -e "\n${bldgrn}Installing Advanced Copy and Move commands ${grn}(Adds progress bars)${rst}\n"
     curl https://raw.githubusercontent.com/jarun/advcpmv/master/install.sh --create-dirs -o ./advcpmv/install.sh
     (cd advcpmv && sh install.sh)
     echo -e "${bldgrn}Copying advcp to /usr/bin/advcp${rst}"
@@ -199,7 +199,7 @@ adv_cp_mv() {
 }
 
 colorscripts() {
-    echo -e "${bldgrn}Installing shell-color-scripts${rst}"
+    echo -e "\n${bldgrn}Installing shell-color-scripts${rst}\n"
     git clone https://gitlab.com/dwt1/shell-color-scripts.git
     cd shell-color-scripts
     sudo make install
@@ -209,7 +209,7 @@ colorscripts() {
 }
 
 dotfiles() {
-    echo -e "${bldgrn}Copying dotfiles${rst}"
+    echo -e "\n${bldgrn}Copying dotfiles${rst}\n"
 
     # If .config directory doesn't exist, create it
     if [[ ! -d $home/.config ]]; then
@@ -219,11 +219,10 @@ dotfiles() {
     # Copy dotfiles
     cp -r $installdir/config/* $home/.config/
     cp zshrc $home/.zshrc
-    echo -e "${bldgrn}Sourcing zshrc & installing zinit plugins${rst}"
 }
 
 os_id=$(detect_os)
-echo -e "Detected ${bldgrn}$os_id${rst}"
+echo -e "\n${grn}Detected ${bldgrn}$os_id${rst}\n"
 pkgs $os_id
 fonts "${font_choices[@]}"
 adv_cp_mv
