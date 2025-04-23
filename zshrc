@@ -54,18 +54,54 @@ alias diff='diff --color=auto'
 command_exists() {
     command -v "$1" > /dev/null 2>&1
 }
-if ! command_exists advcp || ! command_exists advmv; then
-    echo -e "\e[1;32madvcp or advmv not found. Installing...\e[0m"
-    curl https://raw.githubusercontent.com/jarun/advcpmv/master/install.sh --create-dirs -o ./advcpmv/install.sh
-    (cd advcpmv && sh install.sh)
-    echo -e "\e[1;32mCopying advcp to /usr/bin/advcp\e[0m"
-    sudo cp advcpmv/advcp /usr/bin/advcp
-    echo -e "\e[1;32mCopying advmv to /usr/bin/advmv\e[0m"
-    sudo cp advcpmv/advmv /usr/bin/advmv
+
+directory_exists() {
+    [[ -d "$1" ]]
+}
+
+file_exists() {
+    [[ -f "$1" ]]
+}
+
+if ! command_exists nala; then
+    echo "Nala not found. Installing..."
+    sudo apt install nala -y
 fi
 
-alias cp='advcp -gi' # Copy w prog bar & overwrite confirmation
-alias mv='advmv -gi' # Move w prog bar & overwrite confirmation
+if ! command_exists exa; then
+    echo "Exa not found. Installing..."
+    sudo nala install exa -y
+fi
+
+if ! command_exists nvim; then
+    echo "Neovim not found. Installing..."
+    sudo nala install neovim -y
+fi
+
+if ! command_found batcat; then
+    echo "Bat not found. Installing..."
+    sudo nala install bat -y
+fi
+
+if ! command_found trash; then
+    echo "Trash-cli not found. Installing..."
+    sudo nala install trash-cli -y
+fi
+
+if ! command_found fzf; then
+    echo "Fzf not found. Installing..."
+    sudo nala install fzf -y
+fi
+
+if ! directory_exists ~/.config; then
+    echo ".config directory not found. Creating..."
+    mkdir -p ~/.config
+fi
+
+if ! file_exists ~/.config/starship.toml; then
+    echo "Starship config not found. Downloading..."
+    wget https://github.com/ClaytonReardon/LinUtil/raw/refs/heads/main/config/starship.toml -O ~/.config/starship.toml
+fi
 
 # Change Manpager from Less to Batcat
 export MANPAGER='/bin/batcat --wrap=character'
@@ -77,7 +113,3 @@ export PATH="$PATH:$HOME/.local/bin"
 # Shell Integrations
 eval "$(starship init zsh)"
 source <(fzf --zsh)
-eval "$(zoxide init --cmd cd zsh)"
-
-# Colorscript at shell startup
-colorscript -r
