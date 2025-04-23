@@ -40,7 +40,6 @@ setopt hist_find_no_dups
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'exa -gh $realpath'
 
 # Aliases
-alias ls='exa -gh'
 alias install='sudo nala install'
 alias search='nala search'
 alias vim='nvim'
@@ -68,39 +67,34 @@ if ! command_exists nala; then
     sudo apt install nala -y
 fi
 
-if ! command_exists exa; then
-    echo "Exa not found. Installing..."
-    sudo nala install exa -y
-fi
-
 if ! command_exists nvim; then
     echo "Neovim not found. Installing..."
     sudo nala install neovim -y
 fi
 
-if ! command_found batcat; then
+if ! command_exists batcat; then
     echo "Bat not found. Installing..."
     sudo nala install bat -y
 fi
 
-if ! command_found trash; then
+if ! command_exists trash; then
     echo "Trash-cli not found. Installing..."
     sudo nala install trash-cli -y
 fi
 
-if ! command_found fzf; then
+if ! command_exists fzf; then
     echo "Fzf not found. Installing..."
     sudo nala install fzf -y
-fi
-
-if ! directory_exists ~/.config; then
-    echo ".config directory not found. Creating..."
-    mkdir -p ~/.config
 fi
 
 if ! command_exists starship; then
     echo "Starship not found. Installing..."
     curl -sS https://starship.rs/install.sh | bash
+fi
+
+if ! directory_exists ~/.config; then
+    echo ".config directory not found. Creating..."
+    mkdir -p ~/.config
 fi
 
 if ! file_exists ~/.config/starship.toml; then
@@ -117,4 +111,3 @@ export PATH="$PATH:$HOME/.local/bin"
 
 # Shell Integrations
 eval "$(starship init zsh)"
-source <(fzf --zsh)
