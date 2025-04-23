@@ -98,6 +98,11 @@ if ! directory_exists ~/.config; then
     mkdir -p ~/.config
 fi
 
+if ! command_exists starship; then
+    echo "Starship not found. Installing..."
+    curl -sS https://starship.rs/install.sh | bash
+fi
+
 if ! file_exists ~/.config/starship.toml; then
     echo "Starship config not found. Downloading..."
     wget https://github.com/ClaytonReardon/LinUtil/raw/refs/heads/main/config/starship.toml -O ~/.config/starship.toml
